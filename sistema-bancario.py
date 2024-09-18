@@ -8,6 +8,7 @@ menu = """
 [u]  Criar usuario
 [c]  Criar conta
 [lu] Listar usuarios
+[lc] Listar contas
 [q] Sair
 
 => """
@@ -98,7 +99,6 @@ def criar_usuario(usuarios):
 
     try:
         data_nascimento = datetime.strptime(input("Digite a data de nascimento (dd/mm/aaaa): "), "%d/%m/%Y")
-    except(ValueError):
     except ValueError:
         print("A data digitada naão confere com o formato requisitado")
         print("Operacao cancelada.")
@@ -140,6 +140,18 @@ def listar_usuarios(usuarios):
             print(f"{chave}: {valor}")
         print()
 
+def listar_contas(contas):
+    if not contas:
+        print("Nenhuma conta foi criada ainda.")
+        return
+    print()
+    for conta in contas:
+        agencia, num, usuario = conta.values()
+        cpf = usuario["cpf"]
+        print(f"conta {num}:")
+        print(f"agencia - {agencia}")
+        print(f"cpf do usuario - {cpf}\n")
+
     
 
 
@@ -167,6 +179,9 @@ while True:
 
         case "lu" | "listar usuarios":
             listar_usuarios(usuarios)
+        
+        case "lc" | "listar contas":
+            listar_contas(contas)
         
         case "q" | "sair":
             break
