@@ -7,6 +7,7 @@ menu = """
 [e]  Extrato
 [u]  Criar usuario
 [c]  Criar conta
+[lu] Listar usuarios
 [q] Sair
 
 => """
@@ -127,6 +128,18 @@ def criar_conta(contas, agencia, num_conta, usuarios):
     print("Conta criada com sucesso!")
     return num_conta + 1
 
+def listar_usuarios(usuarios):
+    if not usuarios:
+        print("Nenhum usuario foi criado ainda.")
+        return
+    print()
+    for usuario in usuarios:
+        for chave, valor in usuario.items():
+            if chave == "data_nascimento":
+                valor = valor.strftime("%d/%m/%Y")
+            print(f"{chave}: {valor}")
+        print()
+
     
 
 
@@ -151,6 +164,9 @@ while True:
 
         case "c" | "criar conta":
             proximo_num_conta = criar_conta(contas, AGENCIA, proximo_num_conta, usuarios)
+
+        case "lu" | "listar usuarios":
+            listar_usuarios(usuarios)
         
         case "q" | "sair":
             break
