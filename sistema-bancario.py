@@ -2,10 +2,11 @@ from datetime import datetime
 
 menu = """
 
-[d] Depositar
-[s] Sacar
-[e] Extrato
-[u] Criar usuario
+[d]  Depositar
+[s]  Sacar
+[e]  Extrato
+[u]  Criar usuario
+[c]  Criar conta
 [q] Sair
 
 => """
@@ -13,9 +14,12 @@ menu = """
 saldo = 0
 limite = 500
 numero_saques = 0
+proximo_num_conta = 1
 LIMITE_SAQUES = 3
+AGENCIA = "0001"
 extrato = {}
 usuarios = []
+contas = []
 
 
 def adiciona_operacao_com_tempo(dict, operacao):
@@ -94,14 +98,37 @@ def criar_usuario(usuarios):
     try:
         data_nascimento = datetime.strptime(input("Digite a data de nascimento (dd/mm/aaaa): "), "%d/%m/%Y")
     except(ValueError):
+    except ValueError:
         print("A data digitada naão confere com o formato requisitado")
         print("Operacao cancelada.")
         return
     
     endereco = input("Digite o endereco (logradouro, num - bairro - cidade/siglaEstado): ")
+
+    usuarios.append({"nome": nome, "data_nascimento":data_nascimento, "cpf":cpf, "endereco": endereco})
+    print(f"Usuario de cpf {cpf} foi inserido no sistema!")
+
+    return
+
+def encontrar_usuario_por_cpf(usuarios, cpf):
+    for user in usuarios:
+        if user["cpf"] == cpf:
+            return user
+    return None
+
+def criar_conta(contas, agencia, num_conta, usuarios):
+    """ Retorna o valor do proximo numero de conta """
+    cpf = int(input("Digite o cpf do usuario ao qual a conta sera vinculada: "))
+    usuario = encontrar_usuario_por_cpf(usuarios, cpf)
+    if(not usuario):
+        print("Nao existe usuario com esse CPF. Cancelando operacao.")
+        return num_conta
+    contas.append({"agencia":agencia, "num_conta":num_conta, "usuario":usuario})
+    print("Conta criada com sucesso!")
+    return num_conta + 1
+
     
 
-    usuarios.append({"nome": nome, "data_nascimento": data_nascimento, "cpf":cpf,"endereco": endereco})
 
 while True:
 
@@ -121,6 +148,9 @@ while True:
         
         case "u" | "criar usuario":
             criar_usuario(usuarios)
+
+        case "c" | "criar conta":
+            proximo_num_conta = criar_conta(contas, AGENCIA, proximo_num_conta, usuarios)
         
         case "q" | "sair":
             break
