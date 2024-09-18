@@ -51,7 +51,7 @@ def sacar(*, valor, saldo, extrato, limite, numero_saques, limite_saques):
         adiciona_operacao_com_tempo(extrato, f"Saque: R$ {valor:.2f}")
         numero_saques += 1
         print(f"Saque de R${valor:.2f} realizado")
-        print("Saldo atualizado: " + str(saldo))
+        print(f"Saldo atualizado: R${saldo:.2f}")
 
     return saldo
 
@@ -59,11 +59,19 @@ def depositar(valor, saldo, extrato, /):
     if valor > 0:
         saldo += valor
         adiciona_operacao_com_tempo(extrato, f"Depósito: R$ {valor:.2f}")
+        print(f"Deposito de R${valor:.2f} realizado")
+        print(f"Saldo atualizado: R${saldo:.2f}")
 
     else:
         print("Operação falhou! O valor informado é inválido.")
 
     return saldo
+
+def gerar_extrato(saldo, /, *, extrato):
+    print("\n================ EXTRATO ================")
+    print("Não foram realizadas movimentações.") if not extrato else exibir_extrato(extrato)
+    print(f"\nSaldo: R$ {saldo:.2f}")
+    print("==========================================")
 
 while True:
 
@@ -79,10 +87,7 @@ while True:
             saldo = sacar(valor=valor, saldo=saldo, extrato=extrato, limite=limite, numero_saques=numero_saques, limite_saques=LIMITE_SAQUES)
 
         case "e" | "extrato":
-            print("\n================ EXTRATO ================")
-            print("Não foram realizadas movimentações.") if not extrato else exibir_extrato(extrato)
-            print(f"\nSaldo: R$ {saldo:.2f}")
-            print("==========================================")
+            gerar_extrato(saldo, extrato=extrato)
         
         case "q" | "sair":
             break
