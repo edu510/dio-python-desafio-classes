@@ -5,15 +5,17 @@ menu = """
 [d] Depositar
 [s] Sacar
 [e] Extrato
+[u] Criar usuario
 [q] Sair
 
 => """
 
 saldo = 0
 limite = 500
-extrato = {}
 numero_saques = 0
 LIMITE_SAQUES = 3
+extrato = {}
+usuarios = []
 
 
 def adiciona_operacao_com_tempo(dict, operacao):
@@ -73,6 +75,34 @@ def gerar_extrato(saldo, /, *, extrato):
     print(f"\nSaldo: R$ {saldo:.2f}")
     print("==========================================")
 
+def verifica_se_usuario_existe(usuarios, cpf):
+    for user in usuarios:
+        if user["cpf"] == cpf:
+            return True
+    return False
+
+def criar_usuario(usuarios):
+
+    cpf = int(input("Digite o cpf (numeros apenas): "))
+    if(verifica_se_usuario_existe(usuarios, cpf)):
+        print("\nO usuario com o CPF fornecido ja existe!")
+        print("Operacao cancelada.")
+        return
+
+    nome = input("Digite o nome do novo usuario: ")
+
+    try:
+        data_nascimento = datetime.strptime(input("Digite a data de nascimento (dd/mm/aaaa): "), "%d/%m/%Y")
+    except(ValueError):
+        print("A data digitada naão confere com o formato requisitado")
+        print("Operacao cancelada.")
+        return
+    
+    endereco = input("Digite o endereco (logradouro, num - bairro - cidade/siglaEstado): ")
+    
+
+    usuarios.append({"nome": nome, "data_nascimento": data_nascimento, "cpf":cpf,"endereco": endereco})
+
 while True:
 
     opcao = input(menu).lower()
@@ -88,6 +118,9 @@ while True:
 
         case "e" | "extrato":
             gerar_extrato(saldo, extrato=extrato)
+        
+        case "u" | "criar usuario":
+            criar_usuario(usuarios)
         
         case "q" | "sair":
             break
