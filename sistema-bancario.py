@@ -3,15 +3,10 @@ from abc import ABC, abstractmethod
 
 
 menu = """
-
-[d]  Depositar
-[s]  Sacar
-[e]  Extrato
-[u]  Criar usuario
-[c]  Criar conta
-[lu] Listar usuarios
-[lc] Listar contas
-[q] Sair
+[u]  Criar usuario          [d]  Depositar
+[c]  Criar conta            [s]  Sacar
+[lu] Listar usuarios        [e]  Extrato
+[lc] Listar contas          [q] Sair
 
 => """
 
@@ -22,6 +17,7 @@ proximo_num_conta = 1
 LIMITE_SAQUES = 3
 AGENCIA = "0001"
 extrato = {}
+
 usuarios = []
 contas = []
 
@@ -41,7 +37,19 @@ class Conta:
     @property
     def saldo(self):
         return self._saldo
-
+    
+    @property
+    def numero(self):
+        return self._numero
+    
+    @property
+    def agencia(self):
+        return self._agencia
+    
+    @property
+    def historico(self):
+        return self._historico
+    
     def sacar(self, valor):
         saldo = self.saldo
         excedeu_saldo = valor > saldo
@@ -68,6 +76,26 @@ class Conta:
             return False
 
         return True
+    
+    @staticmethod
+    def exibir_extrato(transacoes):
+        for transacao_dict in transacoes:
+            for chave, valor in transacao_dict.items():
+                print(f"{chave}: {valor}")
+
+    def gerar_extrato(self):
+        print("\n================ EXTRATO ================")
+        print("Não foram realizadas movimentações.") if not self._historico.transacoes else self.exibir_extrato(self._historico.transacoes)
+        print(f"\nSaldo: R$ {self.saldo:.2f}")
+        print("==========================================")
+
+    def __str__(self):
+        return f"""\
+            Titular:\t{self._cliente.nome}
+            Agência:\t{self.agencia}
+            Numero:\t{self.numero}
+            Saldo:\t{self.saldo}
+        """
 
 class ContaCorrente(Conta):
     def __init__(self, numero, cliente, limite=500, limite_saques=3):
@@ -94,31 +122,57 @@ class ContaCorrente(Conta):
 
         return False
 
-    def __str__(self):
-        return f"""\
-            Agência:\t{self.agencia}
-            C/C:\t\t{self.numero}
-            Titular:\t{self.cliente.nome}
-        """
-
 
 class Cliente:
     def __init__(self, endereco):
-        self.endereco = endereco
-        self.contas = []
+        self._endereco = endereco
+        self._contas = []
 
     def realizar_transacao(self, conta, transacao):
         transacao.registrar(conta)
 
     def adicionar_conta(self, conta):
-        self.contas.append(conta)
+        self._contas.append(conta)
+    
+    def obter_qtdd_contas(self):
+        return self._contas
+    
+    def obter_conta(self, num):
+        for conta in self._contas:
+            if conta.numero == num:
+                return conta
+        print("O Cliente informado não tem conta com esse número")
+        return None
+    
+    def listar_contas(self):
+        if not self._contas:
+            print("Nenhuma conta foi criada ainda.")
+            return
+        
+        print()
+        for conta in self._contas:
+            print(conta)
 
 class PessoaFisica(Cliente):
     def __init__(self, cpf, nome, data_nascimento, endereco):
         super().__init__(endereco)
-        self.nome = nome
-        self.data_nascimento = data_nascimento
-        self.cpf = cpf
+        self._cpf = cpf
+        self._nome = nome
+        self._data_nascimento = data_nascimento
+    
+    @property
+    def cpf(self):
+        return self._cpf
+    
+    @property
+    def nome(self):
+        return self._nome
+    
+    def __str__(self):
+        return f"Nome: {self._nome}\n\
+            CPF: {self.cpf}\n\
+            Nascimento: {self._data_nascimento:%d-%m-%Y}\n\
+            Endereco: {self._endereco}"
 
 
 class Historico:
@@ -134,7 +188,7 @@ class Historico:
             {
                 "tipo": transacao.__class__.__name__,
                 "valor": transacao.valor,
-                "data": datetime.now().strftime("%d-%m-%Y %H:%M:%s"),
+                "data": datetime.now().strftime("%d/%m/%Y, %H:%M:%S"),
             }
         )
 
@@ -239,14 +293,14 @@ def gerar_extrato(saldo, /, *, extrato):
     print("==========================================")
 
 def verifica_se_usuario_existe(usuarios, cpf):
-    for user in usuarios:
-        if user["cpf"] == cpf:
+    for pessoa in usuarios:
+        if pessoa.cpf == cpf:
             return True
     return False
 
 def criar_usuario(usuarios):
 
-    cpf = int(input("Digite o cpf (numeros apenas): "))
+    cpf = input("Digite o cpf (numeros apenas): ")
     if(verifica_se_usuario_existe(usuarios, cpf)):
         print("\nO usuario com o CPF fornecido ja existe!")
         print("Operacao cancelada.")
@@ -263,15 +317,16 @@ def criar_usuario(usuarios):
     
     endereco = input("Digite o endereco (logradouro, num - bairro - cidade/siglaEstado): ")
 
-    usuarios.append({"nome": nome, "data_nascimento":data_nascimento, "cpf":cpf, "endereco": endereco})
+    usuarios.append(PessoaFisica(cpf, nome, data_nascimento, endereco))
     print(f"Usuario de cpf {cpf} foi inserido no sistema!")
 
     return
 
 def encontrar_usuario_por_cpf(usuarios, cpf):
-    for user in usuarios:
-        if user["cpf"] == cpf:
-            return user
+    for pessoa in usuarios:
+        if pessoa.cpf == cpf:
+            return pessoa
+    print("Não há usuario com esse cpf")
     return None
 
 def criar_conta(contas, agencia, num_conta, usuarios):
@@ -291,10 +346,7 @@ def listar_usuarios(usuarios):
         return
     print()
     for usuario in usuarios:
-        for chave, valor in usuario.items():
-            if chave == "data_nascimento":
-                valor = valor.strftime("%d/%m/%Y")
-            print(f"{chave}: {valor}")
+        print(usuario)
         print()
 
 def listar_contas(contas):
@@ -310,35 +362,57 @@ def listar_contas(contas):
         print(f"cpf do usuario - {cpf}\n")
 
     
+def input_cpf_para_usuario():
+    cpf = input("Digite o cpf do usuario:\t")
+    return encontrar_usuario_por_cpf(usuarios, cpf)
 
+def input_para_conta():
+    usuario: PessoaFisica = input_cpf_para_usuario()
+    if usuario:
+        num_conta = int(input("Digite o numero da conta:\t"))
+        return usuario.obter_conta(num_conta)
 
 while True:
 
     opcao = input(menu).lower()
 
     match opcao:
-        case "d" | "depositar":
-            valor = float(input("Informe o valor do depósito: "))
-            saldo = depositar(valor, saldo, extrato)
-            
-        case "s" | "sacar":
-            valor = float(input("Informe o valor do saque: "))
-            saldo = sacar(valor=valor, saldo=saldo, extrato=extrato, limite=limite, numero_saques=numero_saques, limite_saques=LIMITE_SAQUES)
-
-        case "e" | "extrato":
-            gerar_extrato(saldo, extrato=extrato)
-        
         case "u" | "criar usuario":
             criar_usuario(usuarios)
-
-        case "c" | "criar conta":
-            proximo_num_conta = criar_conta(contas, AGENCIA, proximo_num_conta, usuarios)
-
+        
         case "lu" | "listar usuarios":
             listar_usuarios(usuarios)
         
+        case "c" | "criar conta":
+            cpf = input("Digite o cpf do usuario:\t")
+            usuario: PessoaFisica = encontrar_usuario_por_cpf(usuarios, cpf)
+            if usuario:
+                num = len(usuario.obter_qtdd_contas()) + 1
+                usuario.adicionar_conta(ContaCorrente.nova_conta(usuario, num))
+                print(f"Conta numero {num} criada com sucesso!")
+        
+        case "d" | "depositar":
+            conta = input_para_conta()
+            if conta:
+                valor = float(input("Informe o valor do depósito: "))
+                Deposito(valor).registrar(conta)
+            
+        case "s" | "sacar":
+            conta = input_para_conta()
+            if conta:
+                valor = float(input("Informe o valor do saque: "))
+                Saque(valor).registrar(conta)
+
+        case "e" | "extrato":
+            conta = input_para_conta()
+            if conta:
+                conta.gerar_extrato()
+        
         case "lc" | "listar contas":
-            listar_contas(contas)
+            cpf = input("Digite o cpf do usuario:\t")
+            usuario: PessoaFisica = encontrar_usuario_por_cpf(usuarios, cpf)
+            if usuario:
+                usuario.listar_contas()
         
         case "q" | "sair":
             break
